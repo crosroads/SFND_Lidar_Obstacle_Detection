@@ -139,7 +139,7 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
 		float c = (x2 - x1)*(y3 - y1) - (y2 - y1)*(x3 - x1);
 		float d = -(a*x1 + b*y1 + c*z1);
 
-		// Measure distance between every point and fitted line
+		// Measure distance between every point and fitted plane
 		for (int index = 0; index < cloud->points.size(); index++)
 		{
 			if(inliers.count(index)>0)
@@ -187,7 +187,7 @@ int main ()
 	}
 
 
-	// Render 2D point cloud with inliers and outliers
+	// Render point cloud with inliers and outliers
 	if(inliers.size())
 	{
 		renderPointCloud(viewer,cloudInliers,"inliers",Color(0,1,0));
