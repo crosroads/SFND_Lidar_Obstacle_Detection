@@ -2,64 +2,7 @@
 
 #include "processPointClouds.h"
 #include <pcl/filters/voxel_grid.h>
-#include <unordered_set>
-
-// RANSAC plane segmentation function
-template<typename PointT>
-std::unordered_set<int> RansacPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
-{
-    std::unordered_set<int> inliersResult;
-    srand(time(NULL));
-    
-    // For max iterations 
-    for(int i = 0; i < maxIterations; i++)
-    {
-        // Randomly sample subset and fit plane
-        std::unordered_set<int> inliers;
-        while(inliers.size() < 3) inliers.insert(rand()%(cloud->points.size()));
-
-        float x1, y1, z1, x2, y2, z2, x3, y3, z3;
-        auto itr = inliers.begin();
-        x1 = cloud->points[*itr].x;
-        y1 = cloud->points[*itr].y;
-        z1 = cloud->points[*itr].z;
-        itr++;
-        x2 = cloud->points[*itr].x;
-        y2 = cloud->points[*itr].y;
-        z2 = cloud->points[*itr].z;
-        itr++;
-        x3 = cloud->points[*itr].x;
-        y3 = cloud->points[*itr].y;
-        z3 = cloud->points[*itr].z;
-
-        float a = (y2 - y1)*(z3 - z1) - (z2 - z1)*(y3 - y1);
-        float b = (z2 - z1)*(x3 - x1) - (x2 - x1)*(z3 - z1);
-        float c = (x2 - x1)*(y3 - y1) - (y2 - y1)*(x3 - x1);
-        float d = -(a*x1 + b*y1 + c*z1);
-
-        // Measure distance between every point and fitted plane
-        for (int index = 0; index < cloud->points.size(); index++)
-        {
-            if(inliers.count(index)>0)
-                continue;
-            
-            float x4 = cloud->points[index].x;
-            float y4 = cloud->points[index].y;
-            float z4 = cloud->points[index].z;
-            
-            float dist = fabs(a*x4 + b*y4 + c*z4 + d)/sqrt(a*a + b*b + c*c);
-            
-            // If distance is smaller than threshold count it as inlier
-            if(dist <= distanceThreshold)
-                inliers.insert(index);
-        }
-
-        if(inliers.size() > inliersResult.size())
-            inliersResult = inliers;
-    }
-    
-    return inliersResult;
-}
+#include "ransac3D.h"  // Include the new RANSAC implementation
 
 //constructor:
 template<typename PointT>
@@ -151,7 +94,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
     
-    // Find inliers for the cloud using RANSAC
+    // Find inliers for the cloud using RANSAC from ransac3D.h
     std::unordered_set<int> inliersResult = RansacPlane<PointT>(cloud, maxIterations, distanceThreshold);
     
     // Create point clouds for inliers and outliers
